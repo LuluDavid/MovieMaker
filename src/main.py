@@ -53,12 +53,16 @@ for file in files:
             comment = et.get_tag(comment_tag, full_file)
             location = "" if comment is None else line_break + comment
             date = et.get_tag(date_tag, full_file)
+            print(date)
             if date is None:
                 date = ""
+            elif str(date) == "0000:00:00 00:00:00":
+            	print("Ignoring", file, "(null date)")
+            	continue
             else:
-                date = datetime.strptime(date,  "%Y:%m:%d %H:%M:%S")
-                date = line_break + date.strftime("%d/%m/%Y %H:%M")
-            # Build desc
+            	date = datetime.strptime(date,"%Y:%m:%d %H:%M:%S")
+            	date = line_break + date.strftime("%d/%m/%Y %H:%M")
+        	# Build desc
             desc = filename + location + date
             width, height = clip.size
             # Seems that moviepy does not compute the resolution
