@@ -1,5 +1,5 @@
 from exiftool import ExifTool
-from datetime import datetime
+from datetime import datetime, timedelta
 from os.path import join, isfile, splitext
 from collections import OrderedDict
 from os import listdir
@@ -39,7 +39,8 @@ date_tag = 'File:FileModifyDate'
 data = OrderedDict()
 max_width = 0
 max_height = 0
-
+# Depends on Exif ?
+delta = 2
 print("PRE-PROCESSING...")
 for file in files:
     full_file = join(video_dir, file)
@@ -53,14 +54,12 @@ for file in files:
             comment = et.get_tag(comment_tag, full_file)
             location = "" if comment is None else line_break + comment
             date = et.get_tag(date_tag, full_file)[:18]
-            print(date)
-            if date is None:
-                date = ""
-            elif str(date) == "0000:00:00 00:00:00":
+            if date is None or str(date) == "0000:00:00 00:00:00":
                 print("Ignoring", file, "(null date)")
                 continue
             else:
-                date = datetime.strptime(date, "%Y:%m:%d %H:%M:%S")
+                date = datetime.strptime(date, "%Y:%m:%d %H:%M:%S") + timedelta(hours=delta)
+                print(date)
                 date = line_break + date.strftime("%d/%m/%Y %H:%M")
             # Build desc
             desc = filename + location + date
