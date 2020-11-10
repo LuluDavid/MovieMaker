@@ -8,6 +8,7 @@ from moviepy.video.fx.resize import resize
 from moviepy.video.compositing.transitions import crossfadein, crossfadeout
 from argparse import ArgumentParser
 import sys
+import gc
 import multiprocessing
 
 # Changing imagemagick's directory
@@ -82,6 +83,7 @@ max_width = int(max_height*max_ratio)
 max_size = (max_width, max_height)
 print("Final video width : ", max_width, ", height : ", max_height, "ratio :", max_ratio)
 
+
 def compute_ratio(w, h):
     width_ratio = max_width/w
     height_ratio = max_height/h
@@ -96,6 +98,7 @@ initial_text = TextClip(text=title, bg_color="black", color='white', method='cap
 initial_clip = initial_text.fx(crossfadein, crossfade_duration).fx(crossfadeout, crossfade_duration)
 builder = [initial_clip]
 time = initial_clip.end-crossfade_duration
+gc.collect()
 # Concatenate successively all videos
 for k, pair in data.items():
     clip, desc = pair
@@ -108,7 +111,10 @@ for k, pair in data.items():
     time = transition.end - crossfade_duration
     # Resize and compute main clip
     ratio = compute_ratio(width, height)
-    clip = resize(clip, ratio).with_start(time).with_position('center')
+    clip = resize(clip, ratio).with_start(time)
+    width = clip.size[0]
+    # If it doesn't fill the total width, center it
+    clip = clip.with_position(((max_width-width)/2, 0))
     clip = clip.fx(crossfadein, crossfade_duration).fx(crossfadeout, crossfade_duration)
     time = clip.end - crossfade_duration
     # Add it to the video
