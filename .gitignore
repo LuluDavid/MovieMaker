@@ -1,0 +1,5 @@
+src/resources/*
+src/*.mp4
+requirements.txt
+*.mp4
+.idea/*
