@@ -10,7 +10,7 @@ build :
 	sudo docker build -t ${IMAGE_NAME} .
 
 run :
-	sudo docker run --name ${CONTAINER_NAME} ${IMAGE_NAME}
+	sudo docker run --memory="10g" --memory-swap="10g" --name ${CONTAINER_NAME} ${IMAGE_NAME}
 	sudo docker cp ${CONTAINER_NAME}:/${FILENAME} ./${FILENAME}
 
 clean_container :

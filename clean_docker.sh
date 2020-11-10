@@ -1,3 +1,4 @@
 #!/bin/sh
-docker rm -vf "$(docker ps -a -q)"
-docker rmi -f "$(docker images -a -q)"
+sudo docker system prune -a --volumes << EOF
+y
+EOF
