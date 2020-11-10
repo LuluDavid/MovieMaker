@@ -37,7 +37,7 @@ comment_tag = 'QuickTime:Comment'
 date_tag = 'File:FileModifyDate'
 # Compute max width and height
 data = OrderedDict()
-max_width = 0
+max_ratio = 0
 max_height = 0
 # Depends on Exif ?
 delta = 2
@@ -59,10 +59,8 @@ for file in files:
                 continue
             else:
                 date = datetime.strptime(date, "%Y:%m:%d %H:%M:%S") + timedelta(hours=delta)
-                print(date)
-                date = line_break + date.strftime("%d/%m/%Y %H:%M")
             # Build desc
-            desc = filename + location + date
+            desc = filename + location + line_break + date.strftime("%d/%m/%Y %H:%M")
             width, height = clip.size
             # Seems that moviepy does not compute the resolution
             # for the rotated clip, thus rotate it manually
@@ -72,16 +70,17 @@ for file in files:
             # Register the rotated video
             data[date] = (clip, desc)
             # Maximize the size of the video to the screen
-            if max_width < width:
-                max_width = width
+            ratio = width/height
+            if max_ratio < ratio:
+                max_ratio = ratio
             if max_height < height:
                 max_height = height
-print("Final video width : ", max_width, ", height : ", max_height)
 # Sort by date
 data = OrderedDict(sorted(data.items()))
 print("DONE")
+max_width = int(max_height*max_ratio)
 max_size = (max_width, max_height)
-
+print("Final video width : ", max_width, ", height : ", max_height, "ratio :", max_ratio)
 
 def compute_ratio(w, h):
     width_ratio = max_width/w
@@ -92,7 +91,7 @@ def compute_ratio(w, h):
 print("PROCESSING...")
 # Initial clip
 title = "Le Zoo, que s'est-il passé en 3 ans ?"
-initial_text = TextClip(text=title, bg_color="black", color='white', method='caption', font_size=30, size=max_size)\
+initial_text = TextClip(text=title, bg_color="black", color='white', method='caption', font_size=70, size=max_size)\
     .with_duration(text_duration)
 initial_clip = initial_text.fx(crossfadein, crossfade_duration).fx(crossfadeout, crossfade_duration)
 builder = [initial_clip]
@@ -103,13 +102,13 @@ for k, pair in data.items():
     print("Processing "+clip.filename+"...")
     width, height = clip.size
     # Compute transition clip
-    transition_text = TextClip(text=desc, bg_color="black", color='white', method='caption', font_size=30,
+    transition_text = TextClip(text=desc, bg_color="black", color='white', method='caption', font_size=70,
                                size=max_size).with_duration(text_duration).with_start(time)
     transition = transition_text.fx(crossfadein, crossfade_duration).fx(crossfadeout, crossfade_duration)
     time = transition.end - crossfade_duration
     # Resize and compute main clip
     ratio = compute_ratio(width, height)
-    clip = resize(clip, ratio).with_start(time)
+    clip = resize(clip, ratio).with_start(time).with_position('center')
     clip = clip.fx(crossfadein, crossfade_duration).fx(crossfadeout, crossfade_duration)
     time = clip.end - crossfade_duration
     # Add it to the video
@@ -118,7 +117,7 @@ for k, pair in data.items():
 print("DONE")
 # Add the ending text
 end_text = "À bientôt pour le retour des héros"
-final_text = TextClip(text=end_text, bg_color="black", color='white', method='caption', font_size=30,
+final_text = TextClip(text=end_text, bg_color="black", color='white', method='caption', font_size=70,
                       size=max_size).with_duration(text_duration).with_start(time)
 final_clip = final_text.fx(crossfadein, crossfade_duration).fx(crossfadeout, crossfade_duration)
 builder.append(final_clip)
