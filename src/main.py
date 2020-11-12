@@ -29,7 +29,7 @@ video_dir = args[r_opt][0]
 output_file = args[o_opt][0]
 print("Merging from videos in ", video_dir, " to file ", output_file, "...")
 text_duration = 5  # 3 seconds
-crossfade_duration = 0.5  # 1 second
+crossfade_duration = 0  # 1 second TODO: change once it works
 files = listdir(video_dir)
 line_break = 2*"\n"
 # Whether we use vertical or horizontal clips here
@@ -48,7 +48,7 @@ for file in files:
     print("Pre-processing " + full_file + "...")
     if file.endswith(".mp4") | file.endswith(".m4v") | file.endswith(".gif") | file.endswith(".mov") & \
             isfile(full_file):
-        clip = VideoFileClip(full_file)
+        clip = VideoFileClip(full_file, fps_source="tbr")
         with ExifTool() as et:
             filename = splitext(file)[0]
             # Get tags
@@ -91,10 +91,13 @@ def compute_ratio(w, h):
 
 
 print("PROCESSING...")
+# Text stuff
+text_size = 70
+font = "Arial"
 # Initial clip
 title = "Le Zoo, que s'est-il passé en 3 ans ?"
-initial_text = TextClip(text=title, bg_color="black", color='white', method='caption', font_size=70, size=max_size)\
-    .with_duration(text_duration)
+initial_text = TextClip(text=title, bg_color="black", color='white', method='caption', font_size=text_size, font=font,
+                        size=max_size).with_duration(text_duration)
 initial_clip = initial_text.fx(crossfadein, crossfade_duration).fx(crossfadeout, crossfade_duration)
 builder = [initial_clip]
 time = initial_clip.end-crossfade_duration
@@ -105,8 +108,8 @@ for k, pair in data.items():
     print("Processing "+clip.filename+"...")
     width, height = clip.size
     # Compute transition clip
-    transition_text = TextClip(text=desc, bg_color="black", color='white', method='caption', font_size=70,
-                               size=max_size).with_duration(text_duration).with_start(time)
+    transition_text = TextClip(text=desc, bg_color="black", color='white', method='caption', font_size=text_size,
+                               font=font, size=max_size).with_duration(text_duration).with_start(time)
     transition = transition_text.fx(crossfadein, crossfade_duration).fx(crossfadeout, crossfade_duration)
     time = transition.end - crossfade_duration
     # Resize and compute main clip
@@ -123,8 +126,8 @@ for k, pair in data.items():
 print("DONE")
 # Add the ending text
 end_text = "À bientôt pour le retour des héros"
-final_text = TextClip(text=end_text, bg_color="black", color='white', method='caption', font_size=70,
-                      size=max_size).with_duration(text_duration).with_start(time)
+final_text = TextClip(text=end_text, bg_color="black", color='white', method='caption', font_size=text_size,
+                      font=font, size=max_size).with_duration(text_duration).with_start(time)
 final_clip = final_text.fx(crossfadein, crossfade_duration).fx(crossfadeout, crossfade_duration)
 builder.append(final_clip)
 final_video = CompositeVideoClip(builder)

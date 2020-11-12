@@ -22,4 +22,4 @@ ENV LC_ALL C.UTF-8
 RUN sed -i 's/none/read,write/g' /etc/ImageMagick-6/policy.xml
 ADD src/main.py ./src/main.py
 COPY src/resources ./src/resources
-ENTRYPOINT ["python3", "./src/main.py", "-r", "./src/resources/", "-o", "./test.mp4"]
+ENTRYPOINT ["python3", "-u", "./src/main.py", "-r", "./src/resources/", "-o", "./test.mp4"]
