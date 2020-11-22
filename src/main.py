@@ -41,11 +41,10 @@ data = OrderedDict()
 max_ratio = 0
 max_height = 0
 # Depends on Exif ?
-delta = 2
+gmt = 2
 print("PRE-PROCESSING...")
 for file in files:
     full_file = join(video_dir, file)
-    print("Pre-processing " + full_file + "...")
     if file.endswith(".mp4") | file.endswith(".m4v") | file.endswith(".gif") | file.endswith(".mov") & \
             isfile(full_file):
         clip = VideoFileClip(full_file, fps_source="tbr")
@@ -55,13 +54,13 @@ for file in files:
             comment = et.get_tag(comment_tag, full_file)
             location = "" if comment is None else line_break + comment
             date = et.get_tag(date_tag, full_file)[:18]
-            if date is None or str(date) == "0000:00:00 00:00:00":
-                print("Ignoring", file, "(null date)")
-                continue
-            else:
-                date = datetime.strptime(date, "%Y:%m:%d %H:%M:%S") + timedelta(hours=delta)
+            try:
+            	date = datetime.strptime(date, "%Y:%m:%d %H:%M:%S") + timedelta(hours=gmt)
+            except Exception:
+            	print("Ignoring", file, "(null date)")
+            	continue
             # Build desc
-            desc = filename + location + line_break + date.strftime("%d/%m/%Y %H:%M")
+            desc = str(filename) + str(location) + line_break + date.strftime("%d/%m/%Y %H:%M")
             width, height = clip.size
             # Seems that moviepy does not compute the resolution
             # for the rotated clip, thus rotate it manually
@@ -72,13 +71,13 @@ for file in files:
             data[date] = (clip, desc)
             # Maximize the size of the video to the screen
             ratio = width/height
+            gc.collect()
             if max_ratio < ratio:
                 max_ratio = ratio
             if max_height < height:
                 max_height = height
 # Sort by date
 data = OrderedDict(sorted(data.items()))
-print("DONE")
 max_width = int(max_height*max_ratio)
 max_size = (max_width, max_height)
 print("Final video width : ", max_width, ", height : ", max_height, "ratio :", max_ratio)
@@ -89,8 +88,6 @@ def compute_ratio(w, h):
     height_ratio = max_height/h
     return min(width_ratio, height_ratio)
 
-
-print("PROCESSING...")
 # Text stuff
 text_size = 70
 font = "Arial"
@@ -99,9 +96,8 @@ title = "Le Zoo, que s'est-il passé en 3 ans ?"
 initial_text = TextClip(text=title, bg_color="black", color='white', method='caption', font_size=text_size, font=font,
                         size=max_size).with_duration(text_duration)
 initial_clip = initial_text.fx(crossfadein, crossfade_duration).fx(crossfadeout, crossfade_duration)
-builder = [initial_clip]
+builder = [] # [initial_clip]
 time = initial_clip.end-crossfade_duration
-gc.collect()
 # Concatenate successively all videos
 for k, pair in data.items():
     clip, desc = pair
@@ -123,6 +119,7 @@ for k, pair in data.items():
     # Add it to the video
     builder.append(transition)
     builder.append(clip)
+    gc.collect()
 print("DONE")
 # Add the ending text
 end_text = "À bientôt pour le retour des héros"
@@ -141,3 +138,4 @@ final_video.write_videofile(output_file,
                             audio_codec='aac',
                             temp_audiofile='temp-audio.m4a',
                             remove_temp=True)
+
