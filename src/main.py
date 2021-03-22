@@ -28,7 +28,7 @@ if r_opt not in args or o_opt not in args:
 video_dir = args[r_opt][0]
 output_file = args[o_opt][0]
 print("Merging from videos in ", video_dir, " to file ", output_file, "...")
-text_duration = 5  # 3 seconds
+text_duration = 5  # 5 seconds
 crossfade_duration = 0  # 1 second TODO: change once it works
 files = listdir(video_dir)
 line_break = 2*"\n"
@@ -41,7 +41,7 @@ data = OrderedDict()
 max_ratio = 0
 max_height = 0
 # Depends on Exif ?
-gmt = 2
+gmt = -1
 print("PRE-PROCESSING...")
 for file in files:
     full_file = join(video_dir, file)
@@ -53,7 +53,7 @@ for file in files:
             # Get tags
             comment = et.get_tag(comment_tag, full_file)
             location = "" if comment is None else line_break + comment
-            date = et.get_tag(date_tag, full_file)[:18]
+            date = et.get_tag(date_tag, full_file)[:19]
             try:
             	date = datetime.strptime(date, "%Y:%m:%d %H:%M:%S") + timedelta(hours=gmt)
             except Exception:
@@ -93,10 +93,11 @@ text_size = 70
 font = "Arial"
 # Initial clip
 title = "Le Zoo, que s'est-il passé en 3 ans ?"
+initial_text_duration = 7
 initial_text = TextClip(text=title, bg_color="black", color='white', method='caption', font_size=text_size, font=font,
-                        size=max_size).with_duration(text_duration)
+                        size=max_size).with_duration(initial_text_duration)
 initial_clip = initial_text.fx(crossfadein, crossfade_duration).fx(crossfadeout, crossfade_duration)
-builder = [] # [initial_clip]
+builder = [initial_clip]
 time = initial_clip.end-crossfade_duration
 # Concatenate successively all videos
 for k, pair in data.items():
@@ -123,8 +124,9 @@ for k, pair in data.items():
 print("DONE")
 # Add the ending text
 end_text = "À bientôt pour le retour des héros"
+final_text_duration = 7
 final_text = TextClip(text=end_text, bg_color="black", color='white', method='caption', font_size=text_size,
-                      font=font, size=max_size).with_duration(text_duration).with_start(time)
+                      font=font, size=max_size).with_duration(final_text_duration).with_start(time)
 final_clip = final_text.fx(crossfadein, crossfade_duration).fx(crossfadeout, crossfade_duration)
 builder.append(final_clip)
 final_video = CompositeVideoClip(builder)

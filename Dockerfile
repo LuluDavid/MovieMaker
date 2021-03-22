@@ -21,5 +21,7 @@ ENV LC_ALL C.UTF-8
 # modify ImageMagick policy file so that Textclips work correctly.
 RUN sed -i 's/none/read,write/g' /etc/ImageMagick-6/policy.xml
 ADD src/main.py ./src/main.py
-COPY src/resources ./src/resources
+ADD src/resources ./src/resources
+ENV TZ=Europe/Paris
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 ENTRYPOINT ["python3", "-u", "./src/main.py", "-r", "./src/resources/", "-o", "./test.mp4"]
