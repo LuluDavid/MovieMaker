@@ -3,9 +3,9 @@ from datetime import datetime, timedelta
 from os.path import join, isfile, splitext
 from collections import OrderedDict
 from os import listdir
-from moviepy.editor import *
-from moviepy.video.fx.resize import resize
-from moviepy.video.compositing.transitions import crossfadein, crossfadeout
+from moviepy import *
+from moviepy.video.fx import resize
+from moviepy.video.fx import fadein, fadeout
 from argparse import ArgumentParser
 import sys
 import gc
@@ -55,10 +55,10 @@ for file in files:
             location = "" if comment is None else line_break + comment
             date = et.get_tag(date_tag, full_file)[:19]
             try:
-            	date = datetime.strptime(date, "%Y:%m:%d %H:%M:%S") + timedelta(hours=gmt)
+                date = datetime.strptime(date, "%Y:%m:%d %H:%M:%S") + timedelta(hours=gmt)
             except Exception:
-            	print("Ignoring", file, "(null date)")
-            	continue
+                print("Ignoring", file, "(null date)")
+                continue
             # Build desc
             desc = str(filename) + str(location) + line_break + date.strftime("%d/%m/%Y %H:%M")
             width, height = clip.size
@@ -88,6 +88,7 @@ def compute_ratio(w, h):
     height_ratio = max_height/h
     return min(width_ratio, height_ratio)
 
+
 # Text stuff
 text_size = 70
 font = "Arial"
@@ -95,9 +96,9 @@ font = "Arial"
 title = "Le Zoo, que s'est-il passé en 3 ans ?"
 initial_text_duration = 7
 initial_text = TextClip(text=title, bg_color="black", color='white', method='caption', font_size=text_size, font=font,
-                        size=max_size).with_duration(initial_text_duration)
-initial_clip = initial_text.fx(crossfadein, crossfade_duration).fx(crossfadeout, crossfade_duration)
 builder = [initial_clip]
+initial_clip = initial_text.fx(fadein, crossfade_duration).fx(fadeout, crossfade_duration)
+                        size=max_size).with_duration(text_duration)
 time = initial_clip.end-crossfade_duration
 # Concatenate successively all videos
 for k, pair in data.items():
@@ -107,7 +108,7 @@ for k, pair in data.items():
     # Compute transition clip
     transition_text = TextClip(text=desc, bg_color="black", color='white', method='caption', font_size=text_size,
                                font=font, size=max_size).with_duration(text_duration).with_start(time)
-    transition = transition_text.fx(crossfadein, crossfade_duration).fx(crossfadeout, crossfade_duration)
+    transition = transition_text.fx(fadein, crossfade_duration).fx(fadeout, crossfade_duration)
     time = transition.end - crossfade_duration
     # Resize and compute main clip
     ratio = compute_ratio(width, height)
@@ -115,7 +116,7 @@ for k, pair in data.items():
     width = clip.size[0]
     # If it doesn't fill the total width, center it
     clip = clip.with_position(((max_width-width)/2, 0))
-    clip = clip.fx(crossfadein, crossfade_duration).fx(crossfadeout, crossfade_duration)
+    clip = clip.fx(fadein, crossfade_duration).fx(fadeout, crossfade_duration)
     time = clip.end - crossfade_duration
     # Add it to the video
     builder.append(transition)
@@ -126,8 +127,8 @@ print("DONE")
 end_text = "À bientôt pour le retour des héros"
 final_text_duration = 7
 final_text = TextClip(text=end_text, bg_color="black", color='white', method='caption', font_size=text_size,
+final_clip = final_text.fx(fadein, crossfade_duration).fx(fadeout, crossfade_duration)
                       font=font, size=max_size).with_duration(final_text_duration).with_start(time)
-final_clip = final_text.fx(crossfadein, crossfade_duration).fx(crossfadeout, crossfade_duration)
 builder.append(final_clip)
 final_video = CompositeVideoClip(builder)
 # Output the final video
